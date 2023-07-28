@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { DataPoint } from './Chart.d'
 import styles from './CustomChart.module.css'
+import Chart from './Chart'
 
 const chartData: DataPoint[] = [
     {
@@ -13,7 +14,12 @@ const CustomChart = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const [zoom, setZoom] = useState<number>(1)
 
-    const drawCanvas = (): void => {}
+    const drawCanvas = (): void => {
+        if (!canvasRef.current) return
+        const chart = new Chart(canvasRef.current)
+
+        chart.draw(chartData, zoom)
+    }
 
     useEffect(() => {
         drawCanvas()
