@@ -1,14 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { DataPoint } from './Chart.d'
 import styles from './CustomChart.module.css'
 import Chart from './Chart'
-
-const chartMockData: DataPoint[] = [
-    {
-        timestamp: Date.now(),
-        value: 26,
-    },
-]
+import { chartMockData } from './chartMockData'
 
 const CustomChart = () => {
     const canvasContainerRef = useRef<HTMLDivElement>(null)
