@@ -4,14 +4,11 @@ class Chart {
     private readonly colors = {
         backgroundColor: '#171A1E',
         gridColor: '#384659',
-        curosorGridColor: '#AEB6B7',
+        cursorGridColor: '#AEB6B7',
         positiveColor: '#5DC887',
         negativeColor: '#E35561',
     }
     private dataValues: DataPoint[] | null = null
-
-    private initialParentWidth: number = 0
-    private initialParentHeight: number = 0
 
     private canvas: HTMLCanvasElement
     private ctx: CanvasRenderingContext2D
@@ -22,10 +19,11 @@ class Chart {
     private readonly scaleResolution: number = 2
 
     private zoom: number = 1
-    private readonly maxZoom = 2
-    private readonly minZoom = 1
+    private readonly maxZoom = 3
+    private readonly minZoom = 0.5
     private zoomHorizontal: number = 1
     private zoomVertical: number = 1
+    private readonly zoomFactor = 0.03
 
     private isDragging: boolean = false
     private dragStartX: number = 0
@@ -77,6 +75,25 @@ class Chart {
             )
         })
         this.ctx.stroke()
+
+        this.drawDataLabels()
+    }
+
+    private drawDataLabels() {
+        if (!this.dataValues) return
+        this.ctx.font = '20px "Rubik", sans-serif'
+        this.ctx.fillStyle = this.colors.cursorGridColor
+
+        const labelHeight = this.canvas.height - 30
+        const labelWidth = this.canvas.width / this.dataValues.length
+
+        this.dataValues.forEach((dataPoint, index) => {
+            const x = index * labelWidth + labelWidth / 2
+            const y = labelHeight
+            const valueText = dataPoint.value.toFixed(2).toString()
+
+            this.ctx.fillText(valueText, x, y)
+        })
     }
 
     private drawGrid() {
@@ -102,7 +119,7 @@ class Chart {
 
     private drawCursorLines() {
         this.ctx.setLineDash([10, 15])
-        this.ctx.strokeStyle = this.colors.curosorGridColor
+        this.ctx.strokeStyle = this.colors.cursorGridColor
         this.ctx.lineWidth = 1
 
         this.ctx.beginPath()
@@ -127,7 +144,7 @@ class Chart {
         const textOffsetX = 20
         const textOffsetY = -45
 
-        this.ctx.fillStyle = this.colors.curosorGridColor
+        this.ctx.fillStyle = this.colors.cursorGridColor
         this.ctx.fillText(cursorTextX, this.cursorX + textOffsetX, this.cursorY + textOffsetY)
         this.ctx.fillText(cursorTextY, this.cursorX + textOffsetX, this.cursorY + textOffsetY + 25)
     }
@@ -172,10 +189,6 @@ class Chart {
         }
     }
 
-    private lerp(start: number, end: number, amount: number) {
-        return (1 - amount) * start + amount * end
-    }
-
     private handleMouseDown(event: MouseEvent) {
         this.isDragging = true
         this.dragStartX = event.clientX
@@ -212,10 +225,11 @@ class Chart {
         const deltaY = event.deltaY
 
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            const zoomDelta = deltaX > 0 ? 1.1 : 0.9
+            const zoomDelta = deltaX > 0 ? 1 + this.zoomFactor : 1 - this.zoomFactor
+
             this.zoomHorizontalHandler(this.zoomHorizontal * zoomDelta)
         } else {
-            const zoomDelta = deltaY > 0 ? 1.1 : 0.9
+            const zoomDelta = deltaY > 0 ? 1 + this.zoomFactor : 1 - this.zoomFactor
             this.zoomVerticalHandler(this.zoomVertical * zoomDelta)
         }
         this.draw()
@@ -253,6 +267,10 @@ class Chart {
         this.zoomVertical = this.canvas.height / parentHeight
 
         this.draw()
+    }
+
+    private lerp(start: number, end: number, amount: number) {
+        return (1 - amount) * start + amount * end
     }
 }
 
