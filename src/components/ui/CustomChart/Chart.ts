@@ -54,72 +54,24 @@ class Chart {
         this.draw()
     }
 
-    private setBackgroundColor(color: string) {
-        this.ctx.fillStyle = color
-        this.ctx.fillRect(0, 0, this.canvas!.width, this.canvas!.height)
-    }
-
-    private handleMouseDown(event: MouseEvent) {
-        this.isDragging = true
-        this.dragStartX = event.clientX
-        this.dragStartY = event.clientY
-    }
-
-    private handleMouseUp() {
-        this.isDragging = false
-    }
-
-    private handleMouseMove(event: MouseEvent) {
-        const rect = this.canvas.getBoundingClientRect()
-        this.cursorX = (event.clientX - rect.left) * this.scaleResolution
-        this.cursorY = (event.clientY - rect.top) * this.scaleResolution
-
-        if (this.isDragging) {
-            const deltaX = event.clientX - this.dragStartX
-            const deltaY = event.clientY - this.dragStartY
-            this.dragStartX = event.clientX
-            this.dragStartY = event.clientY
-
-            this.offsetX += deltaX
-            this.offsetY += deltaY
-
-            this.draw()
-        } else {
-            this.draw()
-        }
-    }
-
-    private handleMouseWheel(event: WheelEvent) {
-        // if (!event.ctrlKey) return
-        const zoomDelta = event.deltaY > 0 ? 1.1 : 0.9
-        this.zoomHorizontalHandler(this.zoomHorizontal * zoomDelta)
-        this.zoomVerticalHandler(this.zoomVertical * zoomDelta)
-
-        this.dataValues && this.render(this.dataValues, this.zoomHorizontal)
-        event.preventDefault()
-    }
-
-    public zoomHorizontalHandler(zoomLevel: number) {
-        this.zoomHorizontal = Math.max(0.1, Math.min(10, zoomLevel))
-        this.draw()
-    }
-
-    public zoomVerticalHandler(zoomLevel: number) {
-        this.zoomVertical = Math.max(0.1, Math.min(10, zoomLevel))
-        this.draw()
-    }
-
     private draw() {
-        if (!this.dataValues) return
         this.clearCanvas()
         this.drawGrid()
         this.drawCursorLines()
+        this.drawData()
+    }
+
+    private drawData() {
+        if (!this.dataValues) return
         this.ctx.strokeStyle = this.colors.negativeColor
         this.ctx.lineWidth = 5
         this.ctx.beginPath()
         this.ctx.moveTo(0, 200 - this.dataValues[0].value * this.zoom)
         this.dataValues.forEach((dataPoint, index) => {
-            this.ctx.lineTo((index * 50 + 50) * this.zoom, 200 - dataPoint.value * this.zoom)
+            this.ctx.lineTo(
+                (index * 50 + 50) * this.zoomHorizontal,
+                200 - dataPoint.value * this.zoomVertical
+            )
         })
         this.ctx.stroke()
     }
@@ -221,8 +173,68 @@ class Chart {
         return (1 - amount) * start + amount * end
     }
 
+    private handleMouseDown(event: MouseEvent) {
+        this.isDragging = true
+        this.dragStartX = event.clientX
+        this.dragStartY = event.clientY
+    }
+
+    private handleMouseUp() {
+        this.isDragging = false
+    }
+
+    private handleMouseMove(event: MouseEvent) {
+        const rect = this.canvas.getBoundingClientRect()
+        this.cursorX = (event.clientX - rect.left) * this.scaleResolution
+        this.cursorY = (event.clientY - rect.top) * this.scaleResolution
+
+        if (this.isDragging) {
+            const deltaX = event.clientX - this.dragStartX
+            const deltaY = event.clientY - this.dragStartY
+            this.dragStartX = event.clientX
+            this.dragStartY = event.clientY
+
+            this.offsetX += deltaX
+            this.offsetY += deltaY
+
+            this.draw()
+        } else {
+            this.draw()
+        }
+    }
+
+    private handleMouseWheel(event: WheelEvent) {
+        event.preventDefault()
+        const deltaX = event.deltaX
+        const deltaY = event.deltaY
+
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            const zoomDelta = deltaX > 0 ? 1.1 : 0.9
+            this.zoomHorizontalHandler(this.zoomHorizontal * zoomDelta)
+        } else {
+            const zoomDelta = deltaY > 0 ? 1.1 : 0.9
+            this.zoomVerticalHandler(this.zoomVertical * zoomDelta)
+        }
+        this.draw()
+    }
+
+    public zoomHorizontalHandler(zoomLevel: number) {
+        this.zoomHorizontal = Math.max(0.1, Math.min(10, zoomLevel))
+        this.draw()
+    }
+
+    public zoomVerticalHandler(zoomLevel: number) {
+        this.zoomVertical = Math.max(0.1, Math.min(10, zoomLevel))
+        this.draw()
+    }
+
     private clearCanvas(): void {
         this.ctx.clearRect(0, 0, this.canvas!.width, this.canvas!.height)
+    }
+
+    private setBackgroundColor(color: string) {
+        this.ctx.fillStyle = color
+        this.ctx.fillRect(0, 0, this.canvas!.width, this.canvas!.height)
     }
 
     private resizeCanvas() {
