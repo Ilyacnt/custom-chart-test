@@ -25,4 +25,12 @@ export const chartMockData: DataPoint[] = [
         timestamp: Date.now(),
         value: 88,
     },
+    {
+        timestamp: Date.now() + 3000,
+        value: 31,
+    },
+    {
+        timestamp: Date.now() + 4000,
+        value: 50,
+    },
 ]

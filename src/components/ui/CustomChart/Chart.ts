@@ -22,8 +22,8 @@ class Chart {
     private readonly scaleResolution: number = 2
 
     private zoom: number = 1
-    private readonly maxZoom = 3
-    private readonly minZoom = 0.5
+    private readonly maxZoom = 2
+    private readonly minZoom = 1
     private zoomHorizontal: number = 1
     private zoomVertical: number = 1
 
@@ -66,11 +66,14 @@ class Chart {
         this.ctx.strokeStyle = this.colors.negativeColor
         this.ctx.lineWidth = 5
         this.ctx.beginPath()
-        this.ctx.moveTo(0, 200 - this.dataValues[0].value * this.zoom)
+        this.ctx.moveTo(
+            0 + this.offsetX * this.zoomHorizontal,
+            (200 - this.dataValues[0].value + this.offsetY) * this.zoomVertical
+        )
         this.dataValues.forEach((dataPoint, index) => {
             this.ctx.lineTo(
-                (index * 50 + 50) * this.zoomHorizontal,
-                200 - dataPoint.value * this.zoomVertical
+                (index * 50 + 50 + this.offsetX) * this.zoomHorizontal,
+                (200 - dataPoint.value + this.offsetY) * this.zoomVertical
             )
         })
         this.ctx.stroke()
@@ -81,8 +84,8 @@ class Chart {
 
         this.ctx.beginPath()
         for (let y = 0; y < this.canvas!.height; y += horizontalSpacing) {
-            this.ctx.moveTo(0, y + this.offsetY)
-            this.ctx.lineTo(this.canvas!.width, y + this.offsetY)
+            this.ctx.moveTo(0, (y + this.offsetY) * this.zoomVertical)
+            this.ctx.lineTo(this.canvas!.width, (y + this.offsetY) * this.zoomVertical)
         }
         this.ctx.strokeStyle = this.colors.gridColor
         this.ctx.lineWidth = 1
@@ -90,8 +93,8 @@ class Chart {
 
         this.ctx.beginPath()
         for (let x = 0; x < this.canvas!.width; x += verticalSpacing) {
-            this.ctx.moveTo(x + this.offsetX, 0)
-            this.ctx.lineTo(x + this.offsetX, this.canvas!.height)
+            this.ctx.moveTo((x + this.offsetX) * this.zoomHorizontal, 0)
+            this.ctx.lineTo((x + this.offsetX) * this.zoomHorizontal, this.canvas!.height)
         }
         this.ctx.strokeStyle = this.colors.gridColor
         this.ctx.stroke()
