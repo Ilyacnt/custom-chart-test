@@ -3,29 +3,33 @@ import { DataPoint } from './Chart.d'
 import styles from './CustomChart.module.css'
 import Chart from './Chart'
 
-const chartData: DataPoint[] = [
+const chartMockData: DataPoint[] = [
     {
         timestamp: Date.now(),
-        value: 1337,
+        value: 26,
     },
 ]
 
 const CustomChart = () => {
+    const canvasContainerRef = useRef<HTMLDivElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const [zoom, setZoom] = useState<number>(1)
 
-    const drawCanvas = (): void => {
+    const drawCanvas = () => {
         if (!canvasRef.current) return
         const chart = new Chart(canvasRef.current)
-
-        chart.draw(chartData, zoom)
+        chart.render(chartMockData, zoom)
     }
 
     useEffect(() => {
         drawCanvas()
     }, [])
 
-    return <canvas className={styles.CustomChart} ref={canvasRef} />
+    return (
+        <div className={styles.CustomChartContainer} ref={canvasContainerRef}>
+            <canvas className={styles.CustomChart} ref={canvasRef} />
+        </div>
+    )
 }
 
 export default CustomChart
