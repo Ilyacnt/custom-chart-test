@@ -6,12 +6,11 @@ import { chartMockData } from './chartMockData'
 const CustomChart = () => {
     const canvasContainerRef = useRef<HTMLDivElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
-    const [zoom, setZoom] = useState<number>(1)
 
     const drawCanvas = () => {
         if (!canvasRef.current) return
         const chart = new Chart(canvasRef.current)
-        chart.render(chartMockData, zoom)
+        chart.render(chartMockData)
     }
 
     useEffect(() => {

@@ -18,7 +18,6 @@ class Chart {
 
     private readonly scaleResolution: number = 2
 
-    private zoom: number = 1
     private readonly maxZoom = 3
     private readonly minZoom = 0.5
     private zoomHorizontal: number = 1
@@ -55,9 +54,8 @@ class Chart {
         canvas.addEventListener('wheel', this.handleMouseWheel.bind(this))
     }
 
-    public render(data: DataPoint[], zoom: number) {
+    public render(data: DataPoint[]) {
         this.dataValues = data
-        this.zoom = zoom
         this.draw()
     }
 
