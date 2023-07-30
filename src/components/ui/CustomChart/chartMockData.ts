@@ -3,7 +3,7 @@ import { DataPoint } from './Chart.d'
 export const chartMockData: DataPoint[] = [
     {
         timestamp: Date.now() - 5000,
-        value: 26,
+        value: 99,
     },
     {
         timestamp: Date.now() - 4000,

@@ -29,6 +29,12 @@ class Chart {
     private dragStartX: number = 0
     private dragStartY: number = 0
 
+    private isPinching: boolean = false
+    private lastTouchX1: number = 0
+    private lastTouchY1: number = 0
+    private lastTouchX2: number = 0
+    private lastTouchY2: number = 0
+
     private offsetX: number = 0
     private offsetY: number = 0
     private maxOffsetX: number = 0
@@ -42,6 +48,9 @@ class Chart {
         canvas.addEventListener('mousedown', this.handleMouseDown.bind(this))
         canvas.addEventListener('mousemove', this.handleMouseMove.bind(this))
         canvas.addEventListener('mouseup', this.handleMouseUp.bind(this))
+        canvas.addEventListener('touchstart', this.handleTouchStart.bind(this))
+        canvas.addEventListener('touchmove', this.handleTouchMove.bind(this))
+        canvas.addEventListener('touchend', this.handleTouchEnd.bind(this))
         window.addEventListener('resize', this.resizeCanvas.bind(this))
         canvas.addEventListener('wheel', this.handleMouseWheel.bind(this))
     }
@@ -233,6 +242,51 @@ class Chart {
             this.zoomVerticalHandler(this.zoomVertical * zoomDelta)
         }
         this.draw()
+    }
+
+    private handleTouchStart(event: TouchEvent) {
+        if (event.touches.length === 2) {
+            this.lastTouchX1 = event.touches[0].clientX
+            this.lastTouchY1 = event.touches[0].clientY
+            this.lastTouchX2 = event.touches[1].clientX
+            this.lastTouchY2 = event.touches[1].clientY
+            this.isPinching = true
+        }
+    }
+
+    private handleTouchMove(event: TouchEvent) {
+        if (this.isPinching && event.touches.length === 2) {
+            const touchX1 = event.touches[0].clientX
+            const touchY1 = event.touches[0].clientY
+            const touchX2 = event.touches[1].clientX
+            const touchY2 = event.touches[1].clientY
+
+            const deltaX =
+                Math.abs(touchX1 - touchX2) - Math.abs(this.lastTouchX1 - this.lastTouchX2)
+            const deltaY =
+                Math.abs(touchY1 - touchY2) - Math.abs(this.lastTouchY1 - this.lastTouchY2)
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                const zoomDelta = deltaX > 0 ? 1 + this.zoomFactor : 1 - this.zoomFactor
+                this.zoomHorizontalHandler(this.zoomHorizontal * zoomDelta)
+            } else {
+                const zoomDelta = deltaY > 0 ? 1 + this.zoomFactor : 1 - this.zoomFactor
+                this.zoomVerticalHandler(this.zoomVertical * zoomDelta)
+            }
+
+            this.lastTouchX1 = touchX1
+            this.lastTouchY1 = touchY1
+            this.lastTouchX2 = touchX2
+            this.lastTouchY2 = touchY2
+
+            this.draw()
+        }
+    }
+
+    private handleTouchEnd(event: TouchEvent) {
+        if (event.touches.length < 2) {
+            this.isPinching = false
+        }
     }
 
     public zoomHorizontalHandler(zoomLevel: number) {
