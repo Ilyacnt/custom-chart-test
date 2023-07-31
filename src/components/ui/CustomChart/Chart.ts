@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { DataPoint } from './Chart.d'
 
 class Chart {
@@ -39,6 +40,13 @@ class Chart {
     private maxOffsetX: number = 0
     private maxOffsetY: number = 0
 
+    private originX: number = 0
+    private originY: number = 0
+    private unitX: number = 1
+    private unitY: number = 1
+    private xLabels: string[] = []
+    private yLabels: string[] = []
+
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas as HTMLCanvasElement
         this.ctx = canvas.getContext('2d') as CanvasRenderingContext2D
@@ -56,14 +64,54 @@ class Chart {
 
     public render(data: DataPoint[]) {
         this.dataValues = data
+        this.defineAxesOriginsUnitsLabels()
         this.draw()
     }
 
     private draw() {
         this.clearCanvas()
+        this.drawAxes()
         this.drawGrid()
         this.drawCursorLines()
         this.drawData()
+        this.drawLabels()
+    }
+
+    private defineAxesOriginsUnitsLabels() {
+        let paddingBottom = 70
+
+        this.originX = 0
+        this.originY = this.canvas.height - paddingBottom
+
+        let tempLabelsX: string[] = []
+        let tempLabelsY: string[] = []
+
+        this.dataValues?.forEach((item) => {
+            tempLabelsX.push(dayjs(item.timestamp).format('HH:mm:ss'))
+            tempLabelsY.push(item.value.toString())
+        })
+        this.xLabels = tempLabelsX
+        this.yLabels = tempLabelsY
+
+        const { maxX, minX, maxY, minY } = this.findMinMaxDataValues()
+
+        this.unitX = this.canvas.width / (maxX - minX + 1)
+        this.unitY = this.canvas.height / (maxY - minY + 1)
+    }
+
+    private drawAxes() {
+        this.ctx.strokeStyle = this.colors.cursorGridColor
+        this.ctx.lineWidth = 2
+
+        this.ctx.beginPath()
+        this.ctx.moveTo(0, this.originY)
+        this.ctx.lineTo(this.canvas.width, this.originY)
+        this.ctx.stroke()
+
+        this.ctx.beginPath()
+        this.ctx.moveTo(this.originX, 0)
+        this.ctx.lineTo(this.originX, this.canvas.height)
+        this.ctx.stroke()
     }
 
     private drawData() {
@@ -82,21 +130,41 @@ class Chart {
             )
         })
         this.ctx.stroke()
-
-        this.drawDataLabels()
     }
 
-    private drawDataLabels() {
-        if (!this.dataValues) return
-        this.ctx.font = '20px "Rubik", sans-serif'
+    private drawLabels() {
+        if (!this.dataValues || this.dataValues.length === 0) return
+
+        this.ctx.font = '22px "Rubik", sans-serif'
         this.ctx.fillStyle = this.colors.cursorGridColor
+        this.ctx.textAlign = 'center'
 
-        const labelHeight = this.canvas.height - 30
-        const labelWidth = this.canvas.width / this.dataValues.length
+        const minY = this.findMinMaxDataValues().minY
+        const maxY = this.findMinMaxDataValues().maxY
+        const rangeY = maxY - minY
 
+        // Отображение подписей по оси X
         this.dataValues.forEach((dataPoint, index) => {
-            const x = index * labelWidth + labelWidth / 2
-            const y = labelHeight
+            const x = this.originX + this.unitX * index
+            const y = this.originY + 20 // Расстояние подписи от оси X
+            this.ctx.fillText(dayjs(dataPoint.timestamp).format('HH:mm:ss'), x, y)
+        })
+
+        // Отображение подписей по оси Y
+        for (let i = 0; i <= this.yLabels.length; i++) {
+            const label = (minY + (rangeY / this.yLabels.length) * i).toFixed(2).toString()
+            const x = this.originX - 10 // Расстояние подписи от оси Y
+            const y = this.originY - this.unitY * i
+            this.ctx.fillText(label, x, y + 7) // Смещение по Y, чтобы лейблы были выше оси Y
+        }
+
+        // Отображение подписей для данных
+        this.dataValues.forEach((dataPoint, index) => {
+            const x = this.originX + this.unitX * index // Определение позиции по оси X
+            const y =
+                this.originY -
+                ((this.unitY * (dataPoint.value - minY)) / rangeY) * this.yLabels.length -
+                15 // Расстояние подписи от оси Y
             const valueText = dataPoint.value.toFixed(2).toString()
 
             this.ctx.fillText(valueText, x, y)
@@ -323,6 +391,36 @@ class Chart {
 
     private lerp(start: number, end: number, amount: number) {
         return (1 - amount) * start + amount * end
+    }
+
+    private findMinMaxDataValues(): { minX: number; maxX: number; minY: number; maxY: number } {
+        if (!this.dataValues || this.dataValues.length === 0) {
+            return {
+                minX: 0,
+                maxX: 0,
+                minY: 0,
+                maxY: 0,
+            }
+        }
+
+        let minX = this.dataValues[0].timestamp
+        let maxX = this.dataValues[0].timestamp
+        let minY = this.dataValues[0].value
+        let maxY = this.dataValues[0].value
+
+        this.dataValues.forEach((dataPoint) => {
+            minX = Math.min(minX, dataPoint.timestamp)
+            maxX = Math.max(maxX, dataPoint.timestamp)
+            minY = Math.min(minY, dataPoint.value)
+            maxY = Math.max(maxY, dataPoint.value)
+        })
+
+        return {
+            minX,
+            maxX,
+            minY,
+            maxY,
+        }
     }
 }
 
